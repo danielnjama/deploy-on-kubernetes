@@ -1,4 +1,34 @@
 # Deployment Plan for a Django Application on Kubernetes
+### prerequisites
+# Kubernetes Cluster Required Ports
+
+When setting up a **Kubernetes cluster on AWS EC2**, you must ensure the necessary ports are open to allow proper communication between control plane, worker nodes, and external clients. If operation on other service providers, be sure to confirm if the firewall does not block the said ports. 
+
+## 📌 Required Ports
+
+| **Component**            | **Protocol** | **Ports**        | **Purpose** |
+|--------------------------|-------------|-----------------|-------------|
+| **Kubernetes API Server** | TCP         | 6443            | Allows communication with the Kubernetes API server. Required for `kubectl` commands. |
+| **etcd**                 | TCP         | 2379-2380       | Stores cluster data. Only required on control plane nodes. |
+| **Kubelet API**          | TCP         | 10250           | Enables `kubectl logs`, `exec`, and health checks on worker nodes. |
+| **NodePort Services**    | TCP/UDP     | 30000-32767     | Exposes services externally when using NodePort type. |
+| **kube-scheduler**       | TCP         | 10251           | Handles scheduling of pods on nodes. |
+| **controller-manager**   | TCP         | 10252           | Manages controllers in the cluster. |
+| **Ingress Controller**   | TCP         | 80, 443         | Allows external traffic via HTTP/HTTPS when using an ingress controller. |
+| **SSH (Optional)**       | TCP         | 22              | Enables SSH access to EC2 instances. Should be restricted to your IP only. |
+| **CoreDNS (Internal DNS)** | UDP       | 53              | Handles DNS resolution within the cluster. |
+| **VXLAN (Flannel CNI)**  | TCP/UDP     | 4789            | Required for networking between pods when using Flannel CNI. |
+| **IPsec (Calico CNI)**   | TCP/UDP     | 4500, 500       | Used for secure pod-to-pod networking in Calico. |
+
+## 🔧 How to Update Security Groups on AWS
+1. Go to **AWS Console** → **EC2** → **Security Groups**.
+2. Find the **security group** associated with your Kubernetes cluster.
+3. Click **Inbound Rules** → **Edit inbound rules**.
+4. Add the required **ports & protocols** based on the table above.
+5. Click **Save rules**.
+
+
+
 1. Build and push your Django image.
 - Ensure the Django Database configurations are well set before creating a build
 ```python
@@ -225,9 +255,9 @@ spec:
     app: django
   ports:
     - protocol: TCP
-      port: 8000
+      port: 80
       targetPort: 8000
-  type: ClusterIP
+  type: NodePort
 
 ```
 
