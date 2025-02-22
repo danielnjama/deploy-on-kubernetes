@@ -27,6 +27,66 @@ When setting up a **Kubernetes cluster on AWS EC2**, you must ensure the necessa
 4. Add the required **ports & protocols** based on the table above.
 5. Click **Save rules**.
 
+If using terraform, you can add the rules as follows: adjust as required
+```terraform
+ingress {
+    from_port   = 6443
+    to_port     = 6443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Kubernetes API Server
+  }
+
+  ingress {
+    from_port   = 2379
+    to_port     = 2380
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # etcd
+  }
+
+  ingress {
+    from_port   = 10250
+    to_port     = 10250
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Kubelet API
+  }
+
+  ingress {
+    from_port   = 30000
+    to_port     = 32767
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # NodePort Services
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # HTTP Traffic
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # HTTPS Traffic
+  }
+
+  ingress {
+    from_port   = 4789
+    to_port     = 4789
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"] # VXLAN for Flannel CNI
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Restrict SSH access
+  }
+
+```
+
 
 
 1. Build and push your Django image.
@@ -331,4 +391,13 @@ CSRF_COOKIE_SECURE = True
 SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
+```
+
+
+## Errors and possible resolution
+### App not able to resolve to the database service
+- Ensure that the Database service is correctly created
+- Restart CoreDNS
+```sh
+k rollout restart deployment coredns -n kube-system
 ```
